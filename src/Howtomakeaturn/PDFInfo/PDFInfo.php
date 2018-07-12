@@ -9,6 +9,7 @@ namespace Howtomakeaturn\PDFInfo;
 class PDFInfo
 {
     protected $file;
+    protected $page;
     public $output;
 
     public $title;
@@ -28,9 +29,10 @@ class PDFInfo
 
     public static $bin;
 
-    public function __construct($file)
+    public function __construct($file, $page = null)
     {
         $this->file = $file;
+        $this->page = $page;
 
         $this->loadOutput();
 
@@ -51,9 +53,15 @@ class PDFInfo
         $cmd = escapeshellarg($this->getBinary()); // escapeshellarg to work with Windows paths with spaces.
 
         $file = escapeshellarg($this->file);
+
+        $pageOptions = '';
+        if ($this->page) {
+            $pageOptions = "-f $this->page -l $this->page";
+        }
+
         // Parse entire output
         // Surround with double quotes if file name has spaces
-        exec("$cmd $file", $output, $returnVar);
+        exec("$cmd $file $pageOptions", $output, $returnVar);
 
         if ( $returnVar === 1 ){
             throw new Exceptions\OpenPDFException();
@@ -82,11 +90,18 @@ class PDFInfo
         $this->form = $this->parse('Form');
         $this->pages = $this->parse('Pages');
         $this->encrypted = $this->parse('Encrypted');
-        $this->pageSize = $this->parse('Page size');
         $this->fileSize = $this->parse('File size');
         $this->optimized = $this->parse('Optimized');
         $this->PDFVersion = $this->parse('PDF version');
-        $this->pageRot = $this->parse('Page rot');
+
+        // Page specific properties
+        if ($this->page) {
+            $this->pageSize = $this->parse('Page ' . $this->page . ' size');
+            $this->pageRot = $this->parse('Page ' . $this->page . ' rot');
+        } else {
+            $this->pageSize = $this->parse('Page size');
+            $this->pageRot = $this->parse('Page rot');
+        }
     }
 
     private function parse($attribute)
