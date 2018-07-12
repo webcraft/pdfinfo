@@ -95,8 +95,11 @@ class PDFInfo
         $result = null;
         foreach($this->output as $op)
         {
+            // Clean multiple spaces in the key
+            // It happens when we use pdfinfo with a specific page
+            $cleanedOp = preg_replace('!\s+!', ' ', $op);
             // Extract the number
-            if(preg_match("/" . $attribute . ":\s*(.+)/i", $op, $matches) === 1)
+            if(preg_match("/" . $attribute . ":\s*(.+)/i", $cleanedOp, $matches) === 1)
             {
                 $result = $matches[1];
                 break;
