@@ -23,6 +23,7 @@ class PDFInfo
     public $pages;
     public $encrypted;
     public $pageSize;
+    public $pageRot;
     public $fileSize;
     public $optimized;
     public $PDFVersion;
