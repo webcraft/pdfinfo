@@ -1,5 +1,5 @@
 {
-    "name": "howtomakeaturn/pdfinfo",
+    "name": "jrmc/pdfinfo",
     "type": "library",
     "description": "simple php wrapper for pdfinfo",
     "keywords": ["pdf", "pdfinfo"],
