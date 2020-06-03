@@ -6,6 +6,8 @@ namespace Howtomakeaturn\PDFInfo;
 * @author howtomakeaturn
 */
 
+use Symfony\Component\Process\Process;
+
 class PDFInfo
 {
     protected $file;
@@ -51,18 +53,20 @@ class PDFInfo
 
     private function loadOutput()
     {
-        $cmd = escapeshellarg($this->getBinary()); // escapeshellarg to work with Windows paths with spaces.
-
-        $file = escapeshellarg($this->file);
-
-        $pageOptions = '';
+        $arguments = [$this->getBinary(), $this->file];
         if ($this->page) {
-            $pageOptions = "-f $this->page -l $this->page";
+            $arguments[] = '-f';
+            $arguments[] = $this->page;
+            $arguments[] = '-l';
+            $arguments[] = $this->page;
         }
 
         // Parse entire output
         // Surround with double quotes if file name has spaces
-        exec("$cmd $file $pageOptions", $output, $returnVar);
+        $process = new Process($arguments);
+        $process->run();
+        $output = $process->getOutput();
+        $returnVar = $process->getExitCode();
 
         if ( $returnVar === 1 ){
             throw new Exceptions\OpenPDFException();
@@ -109,14 +113,12 @@ class PDFInfo
     {
         // Iterate through lines
         $result = null;
-        foreach($this->output as $op)
-        {
+        foreach(preg_split("/((\r?\n)|(\r\n?))/", $this->output) as $line) {
             // Clean multiple spaces in the key
             // It happens when we use pdfinfo with a specific page
-            $cleanedOp = preg_replace('!\s+!', ' ', $op);
+            $cleanedOp = preg_replace('!\s+!', ' ', $line);
             // Extract the number
-            if(preg_match("/" . $attribute . ":\s*(.+)/i", $cleanedOp, $matches) === 1)
-            {
+            if(preg_match("/" . $attribute . ":\s*(.+)/i", $cleanedOp, $matches) === 1) {
                 $result = $matches[1];
                 break;
             }

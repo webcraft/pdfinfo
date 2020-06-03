@@ -11,5 +11,8 @@
         "psr-0": {
             "Howtomakeaturn\\PDFInfo": "src/"
         }
+    },
+    "require": {
+        "symfony/process": "^3.0 | ^4.0 | ^5.0"
     }
 }
