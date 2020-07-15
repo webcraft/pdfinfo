@@ -12,6 +12,7 @@ class PDFInfo
 {
     protected $file;
     protected $page;
+    protected $maxPage;
     public $output;
 
     public $title;
@@ -25,6 +26,7 @@ class PDFInfo
     public $pages;
     public $encrypted;
     public $pageSize;
+    public $pageDimensions;
     public $pageRot;
     public $fileSize;
     public $optimized;
@@ -32,10 +34,15 @@ class PDFInfo
 
     public static $bin;
 
-    public function __construct($file, $page = null)
+    public function __construct($file, $page = null, $maxPage = null)
     {
         $this->file = $file;
         $this->page = $page;
+        $this->maxPage = $maxPage;
+
+        if ($this->maxPage < $this->page) {
+            $this->maxPage = $this->page;
+        }
 
         $this->loadOutput();
 
@@ -57,8 +64,14 @@ class PDFInfo
         if ($this->page) {
             $arguments[] = '-f';
             $arguments[] = $this->page;
-            $arguments[] = '-l';
-            $arguments[] = $this->page;
+
+            if ($this->maxPage) {
+                $arguments[] = '-l';
+                $arguments[] = $this->maxPage;
+            } else {
+                $arguments[] = '-l';
+                $arguments[] = $this->page;
+            }
         }
 
         // Parse entire output
@@ -100,12 +113,33 @@ class PDFInfo
         $this->PDFVersion = $this->parse('PDF version');
 
         // Page specific properties
-        if ($this->page) {
-            $this->pageSize = $this->parse('Page ' . $this->page . ' size');
-            $this->pageRot = $this->parse('Page ' . $this->page . ' rot');
+        if ($this->page && $this->maxPage) {
+            $maxPage = $this->maxPage <= $this->pages ? $this->maxPage : $this->pages;
+            for ($i = $this->page; $i <= $maxPage; $i++) {
+                $pageSize = $this->parse('Page ' . $i . ' size');
+                $pageRot = $this->parse('Page ' . $i . ' rot');
+                $this->pageDimensions[$i] = [
+                    'size' => $pageSize,
+                    'rot' => $pageRot
+                ];
+            }
+
+            $this->pageSize = $this->pageDimensions[$this->page]['size'];
+            $this->pageRot = $this->pageDimensions[$this->page]['rot'];
         } else {
-            $this->pageSize = $this->parse('Page size');
-            $this->pageRot = $this->parse('Page rot');
+            if ($this->page) {
+                $this->pageSize = $this->parse('Page ' . $this->page . ' size');
+                $this->pageRot = $this->parse('Page ' . $this->page . ' rot');
+
+            } else {
+                $this->pageSize = $this->parse('Page size');
+                $this->pageRot = $this->parse('Page rot');
+            }
+
+            $this->pageDimensions[$this->page] = [
+                'size' => $this->pageSize,
+                'rot' => $this->pageRot
+            ];
         }
     }
 
